@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Model cho từ vựng tiếng Trung
+model Vocabulary {
+  id              Int      @id @default(autoincrement())
+  chinese         String   // Từ tiếng Trung (汉字)
+  pinyin          String   // Pinyin (拼音)
+  vietnamese      String   // Nghĩa tiếng Việt
+  notes           String?  // Ghi chú
+  example         String?  // Ví dụ câu
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  nextReviewDate  DateTime // Ngày ôn tập tiếp theo
+  level           Int      @default(1) // Cấp độ (1-6)
+  reviewCount     Int      @default(0) // Số lần ôn tập
+  isActive        Boolean  @default(true) // Trạng thái hoạt động
+
+  // Quan hệ với bảng ReviewHistory
+  reviewHistory   ReviewHistory[]
+
+  @@map("vocabulary")
+}
+
+// Model cho lịch sử ôn tập
+model ReviewHistory {
+  id            Int        @id @default(autoincrement())
+  vocabularyId  Int
+  reviewDate    DateTime   @default(now())
+  result        Boolean    // true = pass, false = fail
+  timeSpent     Int?       // Thời gian ôn tập (giây)
+  
+  // Quan hệ với Vocabulary
+  vocabulary    Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@map("review_history")
+}
+
+// Model cho thống kê học tập
+model StudyStats {
+  id              Int      @id @default(autoincrement())
+  date            DateTime @default(now()) @unique
+  totalReviews    Int      @default(0) // Tổng số từ ôn tập
+  correctReviews  Int      @default(0) // Số từ đúng
+  newWordsAdded   Int      @default(0) // Số từ mới thêm
+  studyTime       Int      @default(0) // Thời gian học (phút)
+
+  @@map("study_stats")
+}
